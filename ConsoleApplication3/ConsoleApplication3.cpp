@@ -1,5 +1,6 @@
 
 //includes
+#include <fstream>
 #include <iostream>
 #include <vector>
 #include <iomanip>
@@ -10,13 +11,15 @@
 
 //namespace
 using namespace std;
-using ListaTarefas = vector<Task>;
+
 
 //classe
 class Task // Representa uma tarefa da lista
 {
 public:
-    string Titulo, data, conteudo;
+    string Titulo, data,conteudo;
+    
+    
 
     void addTask() {
         cin.ignore();
@@ -32,8 +35,15 @@ public:
         cout << "insira o conteudo da tarefa:\n";
         cout << "-> ";
         getline(cin, conteudo);
+
+        
+        
+        
     }
 };
+using ListaTarefas = vector<Task>;
+
+
 #define AZUL 11
 #define VERDE 2
 #define VERMELHO 4
@@ -41,6 +51,42 @@ public:
 #define BRANCO_FORTE 15
 
 //ajudas
+static void salvarArquivo(ListaTarefas& tarefas)
+{
+    std::ofstream arquivo("tarefas.txt");
+
+    for (const auto& tarefa : tarefas)
+    {
+        arquivo << tarefa.Titulo << '\n';
+        arquivo << tarefa.data << '\n';
+        arquivo << tarefa.conteudo << '\n';
+        arquivo << "###\n";
+    }
+}
+
+static void carregarArquivo(ListaTarefas& tarefas)
+{
+    std::ifstream arquivo("tarefas.txt");
+
+
+    if(!arquivo.is_open()){
+        return;
+    }
+    Task tarefa;
+    string linha;
+
+    while (getline(arquivo, tarefa.Titulo))
+    {
+        getline(arquivo, tarefa.data); 
+        getline(arquivo, tarefa.conteudo);
+        getline(arquivo, linha);
+        
+        tarefas.push_back(tarefa);
+
+    }
+    
+}
+
 static void cor(int cor)
 {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), cor);
@@ -100,6 +146,8 @@ static void criarTarefa(ListaTarefas& tarefas) // cria tarefa
     list.addTask();
 
     tarefas.push_back(list);
+    salvarArquivo(tarefas);
+
     cor(VERDE);
     cout << "\n[OK] Tarefa adicionada com sucesso!\n";
     cor(BRANCO);
@@ -142,43 +190,51 @@ static void mostrarTarefa(ListaTarefas& tarefas) // printa as tarefas
 }
 static void excluirTarefa(ListaTarefas& tarefas)
 {
-
     int idUser;
+    char confirmarApagar;
 
     titulo("EXCLUIR TAREFA");
-    cout << "ID -> ";
-    cin >> idUser;
 
-    if(tarefas.empty())
+    if (tarefas.empty())
     {
         cor(AZUL);
         cout << "[INFO] NAO EXISTEM TAREFAS CADASTRADAS.\n";
         cor(BRANCO);
+        return;
+    }
+
+    cout << "ID -> ";
+    cin >> idUser;
+
+    if (idUser < 0 || idUser >= tarefas.size())
+    {
+        cor(VERMELHO);
+        cout << "[ERRO] TAREFA NAO ENCONTRADA!\n";
+        cor(BRANCO);
+        return;
+    }
+
+    cout << "Realmente deseja apagar essa tarefa? [y/n] ";
+    cin >> confirmarApagar;
+
+    if (confirmarApagar == 'y' || confirmarApagar == 'Y')
+    {
+        tarefas.erase(tarefas.begin() + idUser);
+        salvarArquivo(tarefas);
+
+        cor(VERDE);
+        cout << "[OK] Tarefa deletada com sucesso!\n";
+        cor(BRANCO);
     }
     else
     {
-        for (int idTarefa = 0; idTarefa < tarefas.size(); idTarefa++)
-        {
-            if (idUser == idTarefa)
-            {
-                tarefas.erase(tarefas.begin() + idTarefa);
-                cor(VERDE);
-                cout << "veiculo deletado com sucesso" << endl;
-                cor(BRANCO);
-                break;
-            }
-            else
-            {
-                cor(VERMELHO);
-                cout << "[ERRO] TAREFA NAO ENCONTRADA!\n";
-                cor(BRANCO);
-            }
-        }
+        cor(AZUL);
+        cout << "[INFO] Operacao cancelada.\n";
+        cor(BRANCO);
     }
 }
 static void editarTarefa(ListaTarefas& tarefas)
 {
-
     
     int idUser,option;
     string novoTitulo, novaData, novoConteudo;
@@ -203,38 +259,44 @@ static void editarTarefa(ListaTarefas& tarefas)
                 cout << "1) Alterar Titulo\n";
                 cout << "2) Alterar Data\n";
                 cout << "3) Alterar Conteudo\n";
-                cout << "==============================\n";
+                linha('=');
                 cout << "Opcao -> ";
                 cin >> option;
 
                 switch (option)
                 {
-                case 1: {
+                case 1: {//titulo
                     cin.ignore();
 
                     cout << "insira o novo titulo" << endl;
                     getline(cin, novoTitulo);
+
                     tarefas[idTarefa].Titulo = novoTitulo;
+                    salvarArquivo(tarefas);
 
                     cout << "Titulo alterado com sucesso" << endl;
                     break;
                 }
-                case 2: {
+                case 2: {//data
                     cin.ignore();
 
                     cout << "insira a nova data" << endl;
                     getline(cin, novaData);
+
                     tarefas[idTarefa].data = novaData;
+                    salvarArquivo(tarefas);
 
                     cout << "data alterada com sucesso" << endl;
                     break;
                 }
-                case 3: {
+                case 3: {//conteudo
                     cin.ignore();
 
                     cout << "insira o novo conteudo" << endl;
                     getline(cin, novoConteudo);
+
                     tarefas[idTarefa].conteudo = novoConteudo;
+                    salvarArquivo(tarefas);
 
                     cout << "conteudo alterado com sucesso" << endl;
                     break;
@@ -244,6 +306,7 @@ static void editarTarefa(ListaTarefas& tarefas)
                     break;
 
                 }
+
             }
         if (!encontrado)
         {
@@ -310,6 +373,7 @@ static void escolha(int op, ListaTarefas& tarefas) //escolha entre os elementos 
 int main() 
 {
     ListaTarefas tarefas;
+    carregarArquivo(tarefas);
 
     int option = 0;
 
