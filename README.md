@@ -1,10 +1,11 @@
-# 📝 To-Do List em C++
+## To-Do List em C++
 
 Projeto de uma lista de tarefas desenvolvido em C++ para praticar programação orientada a objetos e manipulação de vetores.
 
 ## Funcionalidades
 
 - Adicionar tarefas
+- Marcar como feito
 - Listar tarefas
 - Editar tarefas
 - Excluir tarefas
